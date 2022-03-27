@@ -3,7 +3,7 @@
 import subprocess
 from urllib import request
 
-drugs_word_list = ["cocaine", "heroin", "meth", "marijuana", "ecstasy", "lsd", "cannabis", "mushrooms", "opium", "weed","drug"]
+drugs_word_list = ["cocaine", "heroin", "meth", "marijuana", "ecstasy", "lsd", "cannabis", "mushrooms", "opium", "weed","drug","cannabis", "crack", "speed"]
 
 def run_command(command):
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
@@ -30,24 +30,23 @@ def get_info_on_links():
         lines = f.readlines()
         lines_to_write = []
         for line in lines: 
-            print(">>" + line)
             # make all the words in the line lowercase
             line = line.lower()
+            # print(">>" + line)
             if "UNAVAILABLE" not in line and any(ele in line for ele in drugs_word_list):
                 print("appending... " + line)
                 lines_to_write.append(line)
+        # print list items on new lines to make it easier to read using print
+        for line in lines_to_write:
+            print(line)
+        
+        print("rewriting...")
         with open("links_data.txt", "w") as f:
             f.writelines(lines_to_write)
-    
-    print("rewriting...")
-    # remove links which does not contain drug related names
-    with open("links_data.txt", "r") as f:
-        lines = f.readlines()
-        lines = [line for line in lines if "drug" in line.lower()]
-        with open("links_data.txt", "w") as f:
-            f.writelines(lines)
 
 def prepare_links_to_crawl():
+    print("Preparing links to crawl...")
+    print("Getting links from theHiddenWiki...")
     # parse links from hiddenWiki.org
     html = request_html("https://thehiddenwiki.org/")
     
@@ -60,6 +59,28 @@ def prepare_links_to_crawl():
         if '<a href="' in link:
             links.append(link.split('"')[1])
 
+    print("Curating Links from SearchEngines...")
+    # onion Search
+    run_command("onionsearch --limit 1 drugs --output links_onion_search.txt")
+
+    # append to links from links_onion_search.txt
+    with open("links_onion_search.txt", "r") as f:
+        onion_links = f.readlines()
+        for link in onion_links:
+            # split link by comma and get the thrid part
+            print("split",link.split(','))
+            link = link.split(',')[2]
+            # remove the quotes
+            link = link.replace('"', '')
+
+            # only get links and not the route after the domain along with http or https
+            if "http" in link:
+                link = link.split('/')[2]
+            print("adding","http://"+link)
+            if link not in links:
+                links.append(link.strip())
+
+    print("Writing links to links.txt...")
     # save links in a csv file with its title and link
     with open("links.txt", "w") as f:
         for link in links:
