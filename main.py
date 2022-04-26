@@ -24,7 +24,7 @@ def get_info_on_links():
     command = "python3 onioff.py -f links.txt -o links_data.txt"
     run_command(command)
     
-    print("Filtering...")
+    print("Filtering drugs marketplace links..")
     # read links_data.txt and remove links that are not active
     with open("links_data.txt", "r") as f:
         lines = f.readlines()
@@ -32,17 +32,17 @@ def get_info_on_links():
         for line in lines: 
             # make all the words in the line lowercase
             line = line.lower()
-            # print(">>" + line)
             if "UNAVAILABLE" not in line and any(ele in line for ele in drugs_word_list):
-                print("appending... " + line)
+                # print("appending... " + line)
                 lines_to_write.append(line)
         # print list items on new lines to make it easier to read using print
         for line in lines_to_write:
             print(line)
         
-        print("rewriting...")
+        print("writing to links_Data.txt..")
         with open("links_data.txt", "w") as f:
             f.writelines(lines_to_write)
+        print("Done")
 
 def prepare_links_to_crawl():
     print("Preparing links to crawl...")
@@ -68,17 +68,15 @@ def prepare_links_to_crawl():
         onion_links = f.readlines()
         for link in onion_links:
             # split link by comma and get the thrid part
-            print("split",link.split(','))
-            link = link.split(',')[2]
+            link = link.split("\",\"")[2]
             # remove the quotes
             link = link.replace('"', '')
 
             # only get links and not the route after the domain along with http or https
             if "http" in link:
                 link = link.split('/')[2]
-            print("adding","http://"+link)
-            if link not in links:
-                links.append(link.strip())
+            if "http://"+link.strip() not in links:
+                links.append("http://"+link.strip())
 
     print("Writing links to links.txt...")
     # save links in a csv file with its title and link
